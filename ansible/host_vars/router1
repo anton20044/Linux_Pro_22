@@ -1,0 +1,13 @@
+ospf_router_id: 1.1.1.1
+ospf_net_s8: 10.0.10.1/30
+ospf_net_s8_desc: r1-r2
+ospf_net_s9: 10.0.12.1/30
+ospf_net_s9_desc: r1-r3
+ospf_net_s10: 192.168.10.1/24
+ospf_neighbor:
+  - 10.0.10.2
+  - 10.0.12.2
+ospf_net:
+  - 10.0.10.0/30
+  - 10.0.12.0/30
+  - 192.168.10.0/24

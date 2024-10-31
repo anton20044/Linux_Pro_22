@@ -1,0 +1,67 @@
+---
+- name: stop ufw
+  ansible.builtin.service:
+    name: ufw
+    state: stopped
+    enabled: false
+
+- name: add gpg frrouting.org
+  apt_key:
+    url: "https://deb.frrouting.org/frr/keys.asc"
+    state: present
+
+- name: add repo
+  ansible.builtin.apt_repository:
+    repo: deb https://deb.frrouting.org/frr jammy frr-stable
+    state: present
+
+- name: update cache
+  apt:
+    update_cache=yes cache_valid_time=3600
+
+- name: install application
+  ansible.builtin.apt:
+    pkg:
+    - traceroute
+    - tcpdump
+    - net-tools
+    - frr
+    - frr-pythontools
+
+- name: set up forward packages on routers
+  sysctl:
+    name: net.ipv4.conf.all.forwarding
+    value: '1'
+    state: present
+
+- name: enable ospfd
+  replace:
+    path: "/etc/frr/daemons"
+    regexp: 'ospfd=no'
+    replace: 'ospfd=yes'
+
+- name: enable zebra
+  ansible.builtin.lineinfile:
+    path: "/etc/frr/daemons"
+    insertbefore: 'ospfd=yes'
+    line: 'zebra=yes'
+
+- name: copy config ospf
+  ansible.builtin.template:
+    src: ospf_conf
+    dest: /etc/frr/frr.conf
+    owner: frr
+    group: frr
+    mode: '0640'
+
+- name: set up asynchronous routing
+  sysctl:
+    name: net.ipv4.conf.all.rp_filter
+    value: '0'
+    state: present
+  when: ansible_hostname == 'router1'
+
+- name: restart FRR
+  service:
+    name: frr
+    state: restarted
